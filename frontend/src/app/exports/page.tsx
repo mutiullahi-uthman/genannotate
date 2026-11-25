@@ -25,7 +25,7 @@ export default function ExportsPage() {
       render: (item) => (
         <span className="inline-flex items-center gap-2">
           {(item.status === "PENDING" || item.status === "GENERATING") && (
-            <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-brand-600" />
           )}
           {item.status}
         </span>
@@ -40,12 +40,12 @@ export default function ExportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="mb-6 text-3xl font-bold">
-        Export History
-      </h1>
-      <p className="-mt-4 text-sm text-slate-500">
-        Active exports refresh automatically every two seconds.
-      </p>
+      <header className="page-header">
+        <h1 className="page-title">Export history</h1>
+        <p className="page-description">
+          Track generated files and monitor active exports. Progress refreshes automatically.
+        </p>
+      </header>
       <DataTable
         rows={data}
         columns={columns}

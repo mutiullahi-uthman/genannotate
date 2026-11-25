@@ -5,11 +5,10 @@ from fastapi import status
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
 
-from firebase_admin import auth as firebase_auth
-
 from sqlalchemy.orm import Session
 
 from app.core.enums import UserStatus
+from app.core.firebase import firebase_auth
 from app.core.logging import logger
 from app.database.session import get_db
 from app.models.user import User

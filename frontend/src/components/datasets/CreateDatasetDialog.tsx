@@ -1,48 +1,50 @@
 "use client";
 
-import {
-  useState,
-} from "react";
-
-import { useCreateDataset }
-from "@/hooks/useCreateDataset";
+import { useState, type FormEvent } from "react";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { useCreateDataset } from "@/hooks/useCreateDataset";
 
 export default function CreateDatasetDialog() {
-  const [name, setName] =
-    useState("");
-
+  const [name, setName] = useState("");
   const version = "v1";
+  const mutation = useCreateDataset();
 
-  const mutation =
-    useCreateDataset();
-
-  const handleCreate = () => {
-    mutation.mutate({
-      name,
-      version,
-      language_coverage: [
-        "ENGLISH",
-      ],
-    });
-  };
+  function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    mutation.mutate(
+      { name: name.trim(), version, language_coverage: ["ENGLISH"] },
+      {
+        onSuccess: () => {
+          setName("");
+          toast.success("Dataset created.");
+        },
+      },
+    );
+  }
 
   return (
-    <div className="mb-6 flex gap-2">
+    <form
+      onSubmit={handleCreate}
+      className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
+    >
       <input
+        required
+        maxLength={255}
         value={name}
-        onChange={(e) =>
-          setName(e.target.value)
-        }
-        placeholder="Dataset Name"
-        className="border p-2"
+        onChange={(event) => setName(event.target.value)}
+        placeholder="Name your dataset"
+        aria-label="Dataset name"
+        className="h-11 min-w-0 flex-1 px-3 text-sm sm:w-56"
       />
-
       <button
-        onClick={handleCreate}
-        className="rounded bg-black px-4 py-2 text-white"
+        type="submit"
+        disabled={mutation.isPending}
+        className="button-primary w-full sm:w-auto"
       >
-        Create Dataset
+        <Plus size={17} aria-hidden="true" />
+        {mutation.isPending ? "Creating…" : "New dataset"}
       </button>
-    </div>
+    </form>
   );
 }

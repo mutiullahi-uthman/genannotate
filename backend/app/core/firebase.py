@@ -17,6 +17,7 @@ if not firebase_admin._apps:
                     "\\n",
                     "\n",
                 ),
+                "token_uri": "https://oauth2.googleapis.com/token",
             }
         )
     )

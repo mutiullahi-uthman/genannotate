@@ -14,8 +14,12 @@ export default function ProtectedRoute({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900 dark:border-slate-700 dark:border-t-white" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div
+          role="status"
+          aria-label="Loading your workspace"
+          className="h-9 w-9 animate-spin rounded-full border-2 border-brand-100 border-t-brand-600"
+        />
       </div>
     );
   }
@@ -26,7 +30,7 @@ export default function ProtectedRoute({
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
         <p role="alert" className="text-red-700 dark:text-red-300">
           {error}
         </p>

@@ -37,7 +37,7 @@ export default function ReviewPage() {
       render: (record) => (
         <Link
           href={`/review/${record.id}`}
-          className="font-medium text-blue-700 hover:underline dark:text-blue-300"
+          className="font-medium text-brand-700 hover:underline dark:text-brand-100"
         >
           Review
         </Link>
@@ -47,7 +47,12 @@ export default function ReviewPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Review Queue</h1>
+      <header className="page-header">
+        <h1 className="page-title">Review Queue</h1>
+        <p className="page-description">
+          Review submitted annotations and keep decisions moving.
+        </p>
+      </header>
       <DataTable
         rows={data}
         columns={columns}

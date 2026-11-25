@@ -30,10 +30,13 @@ export default function QueuePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold">
-        My Queue
-      </h1>
+    <div className="space-y-6">
+      <header className="page-header">
+        <h1 className="page-title">My Queue</h1>
+        <p className="page-description">
+          Your assigned records and annotation progress, all in one place.
+        </p>
+      </header>
 
       <QueueStats
         stats={stats.data}

@@ -39,46 +39,58 @@ export default function AnnotationForm({
   }
 
   return (
-    <div className="space-y-4 rounded border p-4">
-      <h3 className="font-semibold">
-        Annotation
-      </h3>
+    <section className="surface-card space-y-5 p-5 sm:p-6">
+      <div>
+        <h2 className="text-base font-semibold">Annotation</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Add a construct and the supporting evidence from the transcript.
+        </p>
+      </div>
 
-      <input
-        value={construct}
-        onChange={(e) =>
-          setConstruct(e.target.value)
-        }
-        placeholder="Construct"
-        className="w-full border p-2"
-      />
+      <label className="block space-y-2 text-sm font-medium">
+        <span>Construct</span>
+        <input
+          value={construct}
+          onChange={(e) =>
+            setConstruct(e.target.value)
+          }
+          placeholder="e.g. Social support"
+          className="w-full px-3 py-2.5"
+        />
+      </label>
 
-      <textarea
-        value={evidenceSpan}
-        onChange={(e) =>
-          setEvidenceSpan(
-            e.target.value
-          )
-        }
-        rows={6}
-        className="w-full border p-2"
-      />
+      <label className="block space-y-2 text-sm font-medium">
+        <span>Evidence span</span>
+        <textarea
+          value={evidenceSpan}
+          onChange={(e) =>
+            setEvidenceSpan(
+              e.target.value
+            )
+          }
+          placeholder="Quote the evidence that supports this annotation."
+          rows={7}
+          className="w-full px-3 py-2.5 text-sm leading-6"
+        />
+      </label>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button
+          type="button"
           onClick={draft}
-          className="rounded border px-4 py-2"
+          className="min-h-11 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-surface-muted"
         >
           Save Draft
         </button>
 
         <button
+          type="button"
           onClick={submit}
-          className="rounded bg-black px-4 py-2 text-white"
+          className="button-primary"
         >
           Submit
         </button>
       </div>
-    </div>
+    </section>
   );
 }

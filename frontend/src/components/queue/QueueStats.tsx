@@ -12,7 +12,7 @@ export default function QueueStats({
   stats,
 }: Props) {
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
       <Stat
         label="Assigned"
         value={stats.assigned}
@@ -49,12 +49,12 @@ function Stat({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border p-4">
-      <div className="text-sm text-slate-500">
+    <div className="surface-card min-w-0 p-4 sm:p-5">
+      <div className="truncate text-xs font-medium text-slate-500 sm:text-sm dark:text-slate-400">
         {label}
       </div>
 
-      <div className="text-2xl font-bold">
+      <div className="mt-2 text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
         {value}
       </div>
     </div>

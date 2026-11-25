@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     GCS_BUCKET_NAME: str = Field(...)
 
+    FRONTEND_ORIGINS: list[str] = Field(
+        default=["http://localhost:3000", "http://127.0.0.1:3000"]
+    )
+
     JWT_ALGORITHM: str = "RS256"
 
     CELERY_BROKER_URL: str = Field(...)

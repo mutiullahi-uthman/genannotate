@@ -27,7 +27,7 @@ export default function ImportJobsTable({
             {["PENDING", "QUEUED", "VALIDATING", "IMPORTING"].includes(
               job.status,
             ) && (
-              <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-brand-600" />
             )}
             {job.status.replaceAll("_", " ")}
           </span>

@@ -4,12 +4,14 @@ export default function TranscriptPanel({
   transcript: string;
 }) {
   return (
-    <div className="h-full rounded border p-4">
-      <h3 className="mb-4 font-semibold">
+    <section className="surface-card min-h-64 p-5 sm:p-6">
+      <h2 className="mb-4 text-base font-semibold">
         Transcript
-      </h3>
+      </h2>
 
-      <p>{transcript}</p>
-    </div>
+      <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">
+        {transcript}
+      </p>
+    </section>
   );
 }

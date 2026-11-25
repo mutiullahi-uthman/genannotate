@@ -119,6 +119,7 @@ The complete variable lists and placeholder values are in [`backend/.env.example
 | `FIREBASE_CLIENT_EMAIL` | Firebase Admin service-account email |
 | `FIREBASE_PRIVATE_KEY` | Firebase Admin service-account private key |
 | `GCS_BUCKET_NAME` | Google Cloud Storage bucket used for uploaded files |
+| `FRONTEND_ORIGINS` | JSON array of allowed frontend origins for browser API requests |
 
 ### Frontend
 

@@ -31,7 +31,7 @@ export default function QueueTable({
       render: (record) => (
         <Link
           href={`/queue/${record.id}`}
-          className="font-medium text-blue-700 hover:underline dark:text-blue-300"
+          className="font-medium text-brand-700 hover:underline dark:text-brand-100"
         >
           Open
         </Link>

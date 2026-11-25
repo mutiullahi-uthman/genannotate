@@ -79,30 +79,40 @@ export default function UploadDatasetFile({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-      <input
-        type="file"
-        disabled={uploading}
-        onChange={(e) =>
-          setFile(
-            e.target.files?.[0] ?? null
-          )
-        }
-      />
+    <section className="surface-card space-y-4 p-5 sm:p-6">
+      <div>
+        <h2 className="text-base font-semibold">Upload source file</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Add a CSV, XLSX, or JSON file to validate and import.
+        </p>
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          type="file"
+          accept=".csv,.xlsx,.json"
+          disabled={uploading}
+          onChange={(e) =>
+            setFile(
+              e.target.files?.[0] ?? null
+            )
+          }
+          className="min-h-11 w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-700 dark:file:text-brand-100 sm:flex-1"
+        />
 
-      <button
-        type="button"
-        onClick={upload}
-        disabled={!file || uploading}
-        className="ml-4 rounded-lg bg-slate-900 px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
-      >
-        {uploading ? "Uploading…" : "Upload and import"}
-      </button>
+        <button
+          type="button"
+          onClick={upload}
+          disabled={!file || uploading}
+          className="button-primary w-full sm:w-auto"
+        >
+          {uploading ? "Uploading…" : "Upload and import"}
+        </button>
+      </div>
       {errorMessage && (
-        <p role="alert" className="whitespace-pre-wrap text-sm text-red-700 dark:text-red-300">
+        <p role="alert" className="whitespace-pre-wrap rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
           {errorMessage}
         </p>
       )}
-    </div>
+    </section>
   );
 }

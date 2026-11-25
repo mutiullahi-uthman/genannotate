@@ -26,9 +26,9 @@ export default function DataTable<T>({
   emptyMessage = "No records found.",
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="surface-card overflow-x-auto">
       <table className="w-full min-w-[36rem] text-left text-sm">
-        <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <thead className="bg-surface-muted text-slate-600 dark:text-slate-300">
           <tr>
             {columns.map((column) => (
               <th key={column.key} scope="col" className="px-4 py-3 font-semibold">
@@ -37,7 +37,7 @@ export default function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+        <tbody className="divide-y divide-border">
           {isLoading ? (
             Array.from({ length: 4 }, (_, row) => (
               <tr key={row} aria-label="Loading row">
@@ -60,7 +60,10 @@ export default function DataTable<T>({
             </tr>
           ) : rows?.length ? (
             rows.map((row) => (
-              <tr key={rowKey(row)} className="bg-white dark:bg-slate-900">
+              <tr
+                key={rowKey(row)}
+                className="bg-surface transition-colors hover:bg-surface-muted"
+              >
                 {columns.map((column) => (
                   <td key={column.key} className="px-4 py-3">
                     {column.render(row)}

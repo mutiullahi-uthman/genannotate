@@ -23,18 +23,24 @@ export default function ReviewDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">
-        Review Record
-      </h1>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <header className="page-header">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700 dark:text-brand-100">
+          Annotation quality
+        </p>
+        <h1 className="page-title">Review record</h1>
+        <p className="page-description">
+          Check the annotation carefully before approving it.
+        </p>
+      </header>
 
-      <div className="rounded border p-6">
+      <div className="surface-card min-h-48 p-5 sm:p-8">
         Annotation Review Data
       </div>
 
       <button
         onClick={approve}
-        className="rounded bg-green-600 px-4 py-2 text-white"
+        className="button-primary button-primary-accent"
       >
         Approve
       </button>

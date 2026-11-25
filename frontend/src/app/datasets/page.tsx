@@ -23,14 +23,18 @@ export default function DatasetsPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">
-        Datasets
-      </h1>
+    <div className="space-y-6">
+      <header className="page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-title">Datasets</h1>
+          <p className="page-description">
+            Organize source files and keep each study’s annotation work in one place.
+          </p>
+        </div>
+        <CreateDatasetDialog />
+      </header>
 
-      <CreateDatasetDialog />
-
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {data.map((dataset) => (
           <DatasetCard
             key={dataset.id}

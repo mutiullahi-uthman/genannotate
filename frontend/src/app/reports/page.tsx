@@ -21,11 +21,14 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-bold">
-        Reports
-      </h1>
+      <header className="page-header">
+        <h1 className="page-title">Reports</h1>
+        <p className="page-description">
+          A clear overview of annotation activity across your workspace.
+        </p>
+      </header>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Card
           title="Total Records"
           value={data.total_records}
@@ -63,12 +66,12 @@ function Card({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border p-4">
-      <p className="text-slate-500">
+    <div className="surface-card p-5 sm:p-6">
+      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
         {title}
       </p>
 
-      <h2 className="text-3xl font-bold">
+      <h2 className="mt-3 text-3xl font-bold tracking-tight tabular-nums">
         {value}
       </h2>
     </div>
