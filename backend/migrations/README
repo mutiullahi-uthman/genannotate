@@ -1,0 +1,18 @@
+# Database migrations
+
+Alembic revisions live in `migrations/versions`. Update the SQLAlchemy models,
+generate a revision, and review it before applying it:
+
+```powershell
+docker compose -f backend\docker-compose.yml run --build --rm migrate alembic revision --autogenerate -m "describe the schema change"
+```
+
+Apply pending revisions with:
+
+```powershell
+docker compose -f backend\docker-compose.yml run --rm migrate alembic upgrade head
+```
+
+The Compose `migrate` service runs `alembic upgrade head` after Postgres is
+healthy and before the API or Celery worker starts. Do not edit an already
+applied revision; create a new revision for subsequent schema changes.

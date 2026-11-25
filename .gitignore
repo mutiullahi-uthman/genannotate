@@ -1,0 +1,29 @@
+# Local environment files. Keep example templates versioned.
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Private keys and service credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*service-account*.json
+firebase-adminsdk*.json
+credentials.json
+/secrets/
+
+# Python environments and generated files
+/backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Frontend dependencies and generated output
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/coverage/
+*.tsbuildinfo
