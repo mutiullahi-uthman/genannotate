@@ -51,6 +51,11 @@ services:
       REDIS_URL: redis://redis:6379/0
     ports:
       - "8001:8000"
+    volumes:
+      - type: bind
+        source: ${APPDATA}/gcloud/application_default_credentials.json
+        target: /root/.config/gcloud/application_default_credentials.json
+        read_only: true
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +74,11 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - type: bind
+        source: ${APPDATA}/gcloud/application_default_credentials.json
+        target: /root/.config/gcloud/application_default_credentials.json
+        read_only: true
     depends_on:
       postgres:
         condition: service_healthy

@@ -26,9 +26,7 @@ class Settings(BaseSettings):
     FIREBASE_CLIENT_EMAIL: str = Field(...)
     FIREBASE_PRIVATE_KEY: str = Field(...)
 
-    AZURE_STORAGE_CONNECTION_STRING: str = Field(...)
-    AZURE_STORAGE_CONTAINER: str = Field(...)
-    AZURE_CDN_BASE_URL: str = Field(...)
+    GCS_BUCKET_NAME: str = Field(...)
 
     JWT_ALGORITHM: str = "RS256"
 

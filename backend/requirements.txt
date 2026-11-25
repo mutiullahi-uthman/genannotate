@@ -62,4 +62,3 @@ celery
 redis
 slowapi
 python-multipart
-azure-storage-blob

@@ -1,6 +1,6 @@
 # GenAnnotate
 
-GenAnnotate is a role-aware web application for managing annotation datasets and codebooks, assigning records, reviewing annotations, and tracking imports and exports. It consists of a Next.js frontend and a FastAPI backend, with PostgreSQL for application data, Redis/Celery for background jobs, Firebase Authentication, and Azure Blob Storage for files.
+GenAnnotate is a role-aware web application for managing annotation datasets and codebooks, assigning records, reviewing annotations, and tracking imports and exports. It consists of a Next.js frontend and a FastAPI backend, with PostgreSQL for application data, Redis/Celery for background jobs, Firebase Authentication, and Google Cloud Storage for files.
 
 ## Features
 
@@ -20,7 +20,7 @@ GenAnnotate is a role-aware web application for managing annotation datasets and
 | Database and schema migrations | `backend/` | PostgreSQL, Alembic |
 | Background jobs | `backend/app/tasks/` | Celery, Redis |
 | Authentication | Frontend and backend | Firebase Authentication and Admin SDK |
-| File storage | Backend | Azure Blob Storage |
+| File storage | Backend | Google Cloud Storage |
 
 The frontend is served at `http://localhost:3000`. The Compose setup exposes the API at `http://localhost:8001`; its interactive API documentation is at `http://localhost:8001/docs`.
 
@@ -29,7 +29,8 @@ The frontend is served at `http://localhost:3000`. The Compose setup exposes the
 - Docker Desktop with Docker Compose (recommended for the backend services)
 - Node.js 20.9 or newer and npm
 - Firebase project credentials for authentication
-- Azure Storage settings for file storage
+- A Google Cloud Storage bucket and Google Cloud credentials
+- Google Cloud CLI for local Application Default Credentials
 
 The backend Docker image uses Python 3.14. A local Python setup should use Python 3.14 to match it.
 
@@ -44,11 +45,21 @@ Run these commands from the repository root in PowerShell:
    Copy-Item frontend\.env.example frontend\.env
    ```
 
-2. Edit both `.env` files and replace the example values with your Firebase web app/Admin SDK and Azure Storage settings. Firebase sign-in also requires the appropriate sign-in provider to be enabled and `localhost` to be authorized in Firebase.
+2. Set `GCS_BUCKET_NAME=genannotate` in `backend\.env` (or use your bucket's exact name). Configure Google Cloud credentials with Application Default Credentials:
+
+   ```powershell
+   gcloud auth application-default login
+   ```
+
+   The Compose API and worker mount the Windows ADC file (`%APPDATA%\gcloud\application_default_credentials.json`) read-only. When running the backend directly, the Google Cloud client uses ADC from the current user's environment. In deployed environments, prefer a workload identity or attached service account with access to the bucket rather than a downloaded service-account key.
+
+3. Edit both `.env` files and replace the example Firebase web app/Admin SDK values. Firebase sign-in also requires the appropriate sign-in provider to be enabled and `localhost` to be authorized in Firebase.
 
    `FIREBASE_PRIVATE_KEY` in `backend\.env` should use escaped `\n` sequences between key lines. Do not commit either `.env` file or put real credentials in the example files.
 
-3. Start the backend, database, migrations, Redis, and Celery worker:
+   Keep the bucket private; the backend accesses objects through Google Cloud credentials. The upload API returns the object's canonical URL, which is not anonymously accessible unless you explicitly configure public access.
+
+4. Start the backend, database, migrations, Redis, and Celery worker:
 
    ```powershell
    docker compose -f backend\docker-compose.yml up --build
@@ -56,7 +67,7 @@ Run these commands from the repository root in PowerShell:
 
    Compose runs `alembic upgrade head` before starting the API and worker. The API is available at `http://localhost:8001`.
 
-4. In a separate terminal, install frontend dependencies and start Next.js:
+5. In a separate terminal, install frontend dependencies and start Next.js:
 
    ```powershell
    Set-Location frontend
@@ -107,9 +118,7 @@ The complete variable lists and placeholder values are in [`backend/.env.example
 | `FIREBASE_PROJECT_ID` | Firebase project identifier |
 | `FIREBASE_CLIENT_EMAIL` | Firebase Admin service-account email |
 | `FIREBASE_PRIVATE_KEY` | Firebase Admin service-account private key |
-| `AZURE_STORAGE_CONNECTION_STRING` | Azure Storage account connection |
-| `AZURE_STORAGE_CONTAINER` | Blob container used for files |
-| `AZURE_CDN_BASE_URL` | Base URL used for stored-file links |
+| `GCS_BUCKET_NAME` | Google Cloud Storage bucket used for uploaded files |
 
 ### Frontend
 
@@ -123,7 +132,7 @@ The complete variable lists and placeholder values are in [`backend/.env.example
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase web-app ID |
 
-`NEXT_PUBLIC_*` values are included in the browser bundle; do not put server credentials in them. Keep Firebase Admin credentials and Azure connection strings private. The repository ignore rules exclude local environment files and credential artifacts while allowing the `.env.example` templates to be tracked.
+`NEXT_PUBLIC_*` values are included in the browser bundle; do not put server credentials in them. Keep Firebase Admin credentials private. The repository ignore rules exclude local environment files and credential artifacts while allowing the `.env.example` templates to be tracked.
 
 ## Application routes
 

@@ -6,8 +6,10 @@ The Next.js app is in `src/app` and runs at `http://localhost:3000`.
 
 Copy `backend/.env.example` to `backend/.env` and
 `frontend/.env.example` to `frontend/.env`. Replace the placeholder Firebase
-and Azure values before starting the services. Local `.env` files and private
-key files are ignored by Git; do not commit real credentials.
+values and configure the backend's Google Cloud Storage bucket and credentials
+before starting the services; see the [repository setup guide](../README.md).
+Local `.env` files and private key files are ignored by Git; do not commit real
+credentials.
 
 - `NEXT_PUBLIC_API_URL` — FastAPI base URL (for local Docker Compose, `http://localhost:8001`)
 - `NEXT_PUBLIC_FIREBASE_API_KEY`

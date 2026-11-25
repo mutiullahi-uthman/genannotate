@@ -1,40 +1,25 @@
-from azure.storage.blob import BlobServiceClient
+from google.cloud import storage
 
 from app.core.config import settings
 
 
 class BlobStorageService:
     def __init__(self):
-        self.client = BlobServiceClient.from_connection_string(
-            settings.AZURE_STORAGE_CONNECTION_STRING
-        )
-
-        self.container = settings.AZURE_STORAGE_CONTAINER
+        self.client = storage.Client()
+        self.bucket = self.client.bucket(settings.GCS_BUCKET_NAME)
 
     def upload_file(
         self,
         file_name: str,
         file_bytes: bytes,
     ):
-        blob_client = self.client.get_blob_client(
-            container=self.container,
-            blob=file_name,
-        )
-
-        blob_client.upload_blob(
-            file_bytes,
-            overwrite=True,
-        )
-
-        return blob_client.url
+        blob = self.bucket.blob(file_name)
+        blob.upload_from_string(file_bytes)
+        return blob.public_url
 
     def download_file(
         self,
         file_name: str,
     ) -> bytes:
-        blob_client = self.client.get_blob_client(
-            container=self.container,
-            blob=file_name,
-        )
-
-        return blob_client.download_blob().readall()
+        blob = self.bucket.blob(file_name)
+        return blob.download_as_bytes()
