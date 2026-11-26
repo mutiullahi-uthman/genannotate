@@ -10,12 +10,15 @@ import {
   LayoutDashboard,
   LogOut,
   Leaf,
+  ListChecks,
+  Plus,
   Users,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
@@ -39,7 +42,18 @@ const navigationSections: {
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Datasets", href: "/datasets", icon: Database },
       { label: "Queue", href: "/queue", icon: ClipboardCheck },
-      { label: "Review", href: "/review", icon: ChartColumnIncreasing },
+      {
+        label: "Assignments",
+        href: "/assignments",
+        icon: ListChecks,
+        roles: ["ADMIN", "SUPERVISOR"],
+      },
+      {
+        label: "Review",
+        href: "/review",
+        icon: ChartColumnIncreasing,
+        roles: ["ADMIN", "SUPERVISOR"],
+      },
     ],
   },
   {
@@ -51,7 +65,12 @@ const navigationSections: {
         icon: ChartColumnIncreasing,
         roles: ["ADMIN", "SUPERVISOR", "RESEARCH_LEAD"],
       },
-      { label: "Exports", href: "/exports", icon: Download },
+      {
+        label: "Exports",
+        href: "/exports",
+        icon: Download,
+        roles: ["ADMIN", "SUPERVISOR", "RESEARCH_LEAD"],
+      },
       {
         label: "Codebooks",
         href: "/codebooks",
@@ -77,7 +96,15 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile } = useAuth();
+  const {
+    profile,
+    projects,
+    activeProject,
+    selectProject,
+    createProject,
+  } = useAuth();
+  const [projectName, setProjectName] = useState("");
+  const [projectError, setProjectError] = useState<string | null>(null);
 
   async function handleSignOut() {
     try {
@@ -86,6 +113,21 @@ export default function Sidebar({
       router.replace("/login");
     } catch {
       toast.error("Could not sign out. Please try again.");
+    }
+  }
+
+  async function handleCreateProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      await createProject(projectName.trim());
+      setProjectName("");
+      setProjectError(null);
+      onClose();
+      toast.success("Project created.");
+    } catch (error) {
+      setProjectError(
+        error instanceof Error ? error.message : "Could not create project.",
+      );
     }
   }
 
@@ -116,6 +158,52 @@ export default function Sidebar({
           <X size={18} aria-hidden="true" />
         </button>
       </div>
+
+      {activeProject && (
+        <label className="mb-5 block px-1">
+          <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Project
+          </span>
+          <select
+            aria-label="Active project"
+            value={activeProject.id}
+            onChange={(event) => selectProject(event.target.value)}
+            disabled={projects.length < 2}
+            className="min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-medium disabled:opacity-80"
+          >
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {profile?.role === "ADMIN" && (
+        <form onSubmit={handleCreateProject} className="mb-5 space-y-2 px-1">
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            New project
+            <input
+              value={projectName}
+              onChange={(event) => setProjectName(event.target.value)}
+              minLength={2}
+              maxLength={255}
+              required
+              placeholder="Project name"
+              className="mt-2 min-h-10 w-full px-3 text-sm font-normal normal-case tracking-normal"
+            />
+          </label>
+          <button type="submit" className="button-secondary min-h-9 w-full px-3 py-1 text-xs">
+            <Plus size={14} aria-hidden="true" />
+            Create project
+          </button>
+          {projectError && (
+            <p role="alert" className="text-xs text-red-700 dark:text-red-300">
+              {projectError}
+            </p>
+          )}
+        </form>
+      )}
 
       <div className="my-6 rounded-xl border border-border bg-surface-muted p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent-500">

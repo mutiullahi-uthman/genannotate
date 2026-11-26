@@ -131,7 +131,8 @@ class ImportFileServiceTests(unittest.TestCase):
         dataset_file = SimpleNamespace(
             dataset_id=uuid4(),
             file_name="records.csv",
-            blob_path="datasets/dataset-id/records.csv",
+            object_key="projects/project-id/datasets/dataset-id/records.csv",
+            upload_complete=True,
         )
 
         class QueryStub:
@@ -167,7 +168,7 @@ class ImportFileServiceTests(unittest.TestCase):
 
         self.assertEqual(
             storage.requested_path,
-            dataset_file.blob_path,
+            dataset_file.object_key,
         )
         self.assertEqual(parsed.rows[0]["record_id"], "r-1")
 
@@ -199,7 +200,8 @@ class ImportFileServiceTests(unittest.TestCase):
         dataset_file = SimpleNamespace(
             dataset_id=uuid4(),
             file_name="records.csv",
-            blob_path="datasets/other-dataset/records.csv",
+            object_key="projects/project-id/datasets/other-dataset/records.csv",
+            upload_complete=True,
         )
 
         class QueryStub:

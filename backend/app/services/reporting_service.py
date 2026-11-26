@@ -5,6 +5,7 @@ from sqlalchemy import func
 
 from app.models.annotation import Annotation
 from app.models.dataset import Dataset
+from app.models.dataset_version import DatasetVersion
 from app.models.record import Record
 from app.models.user import User
 
@@ -151,6 +152,13 @@ class ReportingService:
         ]
 
     def dataset_summary(self, start_date=None, end_date=None):
+        latest_version = (
+            self.db.query(DatasetVersion.label)
+            .filter(DatasetVersion.dataset_id == Dataset.id)
+            .order_by(DatasetVersion.version_number.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
         record_join = and_(
             Record.dataset_id == Dataset.id,
             *self._date_conditions(
@@ -163,7 +171,7 @@ class ReportingService:
             self.db.query(
                 Dataset.id,
                 Dataset.name,
-                Dataset.version,
+                latest_version.label("version"),
                 func.count(
                     Record.id
                 ).label("record_count"),
@@ -175,7 +183,7 @@ class ReportingService:
             .group_by(
                 Dataset.id,
                 Dataset.name,
-                Dataset.version,
+                latest_version,
             )
             .all()
         )

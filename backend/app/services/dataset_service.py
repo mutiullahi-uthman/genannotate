@@ -12,20 +12,18 @@ class DatasetService:
     def create_dataset(
         self,
         name,
-        version,
         language_coverage,
         created_by_id,
     ):
-        existing = self.repository.get_by_name_and_version(name, version)
+        existing = self.repository.get_by_name(name)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Dataset version already exists",
+                detail="A dataset with this name already exists in the project.",
             )
 
         dataset = Dataset(
             name=name,
-            version=version,
             language_coverage=language_coverage,
             status=DatasetStatus.ACTIVE,
             created_by_id=created_by_id,

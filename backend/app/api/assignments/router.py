@@ -1,13 +1,21 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Query
 
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
-from app.core.enums import Permission
+from app.core.enums import Permission, UserRole, UserStatus
 from app.core.permissions import require_permission
 
 from app.database.session import get_db
+from app.models.dataset_version import DatasetVersion
+from app.models.record import Record
+from app.models.project import ProjectMembership
+from app.models.user import User
 
 from app.repositories.assignment_repository import (
     AssignmentRepository,
@@ -15,7 +23,10 @@ from app.repositories.assignment_repository import (
 
 from app.schemas.assignment import (
     AssignmentCreate,
+    AnnotatorResponse,
+    AssignmentCandidateResponse,
     BulkAssignmentCreate,
+    ManualBulkAssignmentCreate,
     ReassignmentRequest,
     AssignmentResponse,
 )
@@ -28,6 +39,67 @@ router = APIRouter(
     prefix="/assignments",
     tags=["Assignments"],
 )
+
+
+@router.get(
+    "/unassigned",
+    response_model=list[AssignmentCandidateResponse],
+    dependencies=[Depends(require_permission(Permission.RECORD_ASSIGN))],
+)
+def list_unassigned_records(
+    dataset_id: UUID,
+    dataset_version_id: UUID,
+    limit: int = Query(default=500, ge=1, le=5000),
+    db: Session = Depends(get_db),
+):
+    version = (
+        db.query(DatasetVersion)
+        .filter(
+            DatasetVersion.id == dataset_version_id,
+            DatasetVersion.dataset_id == dataset_id,
+        )
+        .first()
+    )
+    if version is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset version not found",
+        )
+
+    records = (
+        db.query(Record)
+        .filter(
+            Record.dataset_id == dataset_id,
+            Record.dataset_version_id == dataset_version_id,
+            Record.assignee_id.is_(None),
+        )
+        .order_by(Record.created_at.asc())
+        .limit(limit)
+        .all()
+    )
+    return records
+
+
+@router.get(
+    "/annotators",
+    response_model=list[AnnotatorResponse],
+    dependencies=[Depends(require_permission(Permission.RECORD_ASSIGN))],
+)
+def list_project_annotators(
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(User)
+        .join(ProjectMembership, ProjectMembership.user_id == User.id)
+        .filter(
+            ProjectMembership.project_id == db.info["project_id"],
+            ProjectMembership.active.is_(True),
+            ProjectMembership.role == UserRole.ANNOTATOR,
+            User.status == UserStatus.ACTIVE,
+        )
+        .order_by(User.full_name)
+        .all()
+    )
 
 
 # Assign a record to an assignee 
@@ -53,6 +125,27 @@ def assign_record(
         assignee_id=payload.assignee_id,
         assigned_by_id=current_user.id,
     )
+
+
+@router.post(
+    "/manual-bulk",
+    dependencies=[Depends(require_permission(Permission.RECORD_ASSIGN))],
+)
+def manual_bulk_assign(
+    payload: ManualBulkAssignmentCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    service = AssignmentService(
+        AssignmentRepository(db),
+        db,
+    )
+    assignments = service.assign_records_manually(
+        record_ids=payload.record_ids,
+        assignee_id=payload.assignee_id,
+        assigned_by_id=current_user.id,
+    )
+    return {"assigned_count": len(assignments)}
     
 # Bulk assign records to multiple assignees
 @router.post(
@@ -66,6 +159,20 @@ def bulk_assign(
         get_current_user
     ),
 ):
+    version = (
+        db.query(DatasetVersion)
+        .filter(
+            DatasetVersion.id == payload.dataset_version_id,
+            DatasetVersion.dataset_id == payload.dataset_id,
+        )
+        .first()
+    )
+    if version is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset version not found",
+        )
+
     service = AssignmentService(
         AssignmentRepository(db),
         db,
@@ -73,6 +180,7 @@ def bulk_assign(
 
     assignments = service.bulk_assign(
         dataset_id=payload.dataset_id,
+        dataset_version_id=payload.dataset_version_id,
         assignee_ids=payload.assignee_ids,
         assigned_by_id=current_user.id,
         limit=payload.limit,

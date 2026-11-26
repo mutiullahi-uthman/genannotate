@@ -4,7 +4,9 @@ from app.models.codebook import Codebook
 from app.models.codebook_label import CodebookLabel
 from app.models.dataset import Dataset
 from app.models.dataset_file import DatasetFile
+from app.models.dataset_version import DatasetVersion
 from app.models.export import Export
+from app.models.project import Project, ProjectMembership
 from app.models.record import Record
 from app.models.review import Review
 from app.models.user import User
@@ -16,6 +18,9 @@ __all__ = [
     "User",
     "Dataset",
     "DatasetFile",
+    "DatasetVersion",
+    "Project",
+    "ProjectMembership",
     "ImportJob",
     "Record",
     "Annotation",

@@ -1,18 +1,24 @@
 from datetime import date
 
-from sqlalchemy import Date, Integer
+from sqlalchemy import Date, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class DashboardMetric(BaseModel):
+class DashboardMetric(ProjectScopedMixin, BaseModel):
     __tablename__ = "dashboard_metrics"
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "metric_date",
+            name="uq_dashboard_metrics_project_date",
+        ),
+    )
 
     metric_date: Mapped[date] = mapped_column(
         Date,
         nullable=False,
-        unique=True,
         index=True,
     )
 

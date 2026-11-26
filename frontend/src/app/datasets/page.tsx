@@ -5,10 +5,16 @@ import CreateDatasetDialog from "@/components/datasets/CreateDatasetDialog";
 
 import { useDatasets } from "@/hooks/useDatasets";
 import { PageSkeleton } from "@/components/ui/Skeleton";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function DatasetsPage() {
   const { data, isLoading, isError } =
     useDatasets();
+  const { profile } = useAuth();
+  const canCreateDataset =
+    profile?.role === "ADMIN" ||
+    profile?.role === "SUPERVISOR" ||
+    profile?.role === "RESEARCH_LEAD";
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -31,7 +37,7 @@ export default function DatasetsPage() {
             Organize source files and keep each study’s annotation work in one place.
           </p>
         </div>
-        <CreateDatasetDialog />
+        {canCreateDataset && <CreateDatasetDialog />}
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">

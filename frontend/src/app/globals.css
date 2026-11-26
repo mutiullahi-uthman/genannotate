@@ -230,6 +230,70 @@ textarea {
   opacity: 0.55;
 }
 
+.button-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  padding: 0.625rem 1rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+
+.button-secondary:hover {
+  background: var(--surface-muted);
+}
+
+.button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.annotation-workspace {
+  grid-template-columns:
+    minmax(0, var(--workspace-left))
+    0.5rem
+    minmax(20rem, var(--workspace-right));
+}
+
+.workspace-resize-handle {
+  cursor: col-resize;
+  touch-action: none;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.workspace-resize-handle::after {
+  display: block;
+  width: 3px;
+  height: 3rem;
+  margin: auto;
+  border-radius: 9999px;
+  background: var(--border);
+  content: "";
+}
+
+.workspace-resize-handle:hover::after,
+.workspace-resize-handle:focus-visible::after {
+  background: var(--brand);
+}
+
+@media (max-width: 1023px) {
+  .annotation-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace-resize-handle {
+    display: none;
+  }
+}
+
 .button-primary-accent {
   background: var(--accent);
   color: var(--accent-button-text);

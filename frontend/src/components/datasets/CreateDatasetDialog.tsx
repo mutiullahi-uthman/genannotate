@@ -7,13 +7,12 @@ import { useCreateDataset } from "@/hooks/useCreateDataset";
 
 export default function CreateDatasetDialog() {
   const [name, setName] = useState("");
-  const version = "v1";
   const mutation = useCreateDataset();
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     mutation.mutate(
-      { name: name.trim(), version, language_coverage: ["ENGLISH"] },
+      { name: name.trim(), language_coverage: ["ENGLISH"] },
       {
         onSuccess: () => {
           setName("");

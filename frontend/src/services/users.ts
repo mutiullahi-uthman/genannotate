@@ -1,7 +1,15 @@
 import { api } from "@/services/api";
-import type { UserProfile, UserRole, UserStatus } from "@/services/auth";
+import type { UserRole, UserStatus } from "@/services/auth";
 
-export type ManagedUser = UserProfile;
+export type ManagedUser = {
+  id: string;
+  firebase_uid: string;
+  email: string;
+  full_name: string;
+  role: UserRole | null;
+  membership_active: boolean | null;
+  status: UserStatus;
+};
 
 export async function getUsers() {
   const response = await api.get<ManagedUser[]>("/users");
@@ -14,6 +22,7 @@ export async function updateUser({
 }: {
   userId: string;
   role?: UserRole;
+  membership_active?: boolean;
   status?: UserStatus;
 }) {
   const response = await api.patch<ManagedUser>(

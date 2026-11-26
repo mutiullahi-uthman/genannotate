@@ -5,10 +5,10 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
 from app.core.enums import AssignmentType
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Assignment(BaseModel):
+class Assignment(ProjectScopedMixin, BaseModel):
     __tablename__ = "assignments"
 
     record_id = mapped_column(

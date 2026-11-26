@@ -7,10 +7,10 @@ from app.core.enums import (
     FrequencyCategory,
     RiskLevel,
 )
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Annotation(BaseModel):
+class Annotation(ProjectScopedMixin, BaseModel):
     __tablename__ = "annotations"
 
     record_id = mapped_column(

@@ -2,12 +2,23 @@ import axios from "axios";
 import { toast } from "sonner";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 
+const configuredApiUrl =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "";
+const apiBaseUrl = configuredApiUrl.endsWith("/api/v1")
+  ? configuredApiUrl
+  : `${configuredApiUrl}/api/v1`;
+
 export const api = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL,
+  baseURL: apiBaseUrl,
 });
 
 api.interceptors.request.use(async (config) => {
+  if (typeof window !== "undefined") {
+    const projectId = window.localStorage.getItem("active-project-id");
+    if (projectId) {
+      config.headers["X-Project-ID"] = projectId;
+    }
+  }
   if (isFirebaseConfigured()) {
     const user = getFirebaseAuth().currentUser;
     if (user) {

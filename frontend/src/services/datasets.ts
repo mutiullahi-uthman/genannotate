@@ -3,12 +3,20 @@ import { api } from "./api";
 export type Dataset = {
   id: string;
   name: string;
-  version: string;
   status: string;
   language_coverage: string[];
   created_by_id: string;
   created_at: string;
   updated_at: string;
+  latest_version: DatasetVersion | null;
+  versions: DatasetVersion[];
+};
+
+export type DatasetVersion = {
+  id: string;
+  version_number: number;
+  label: string;
+  imported_at: string;
 };
 
 export async function getDatasets() {
@@ -20,7 +28,7 @@ export async function getDatasets() {
 export async function getDataset(
   datasetId: string
 ) {
-  const response = await api.get(
+  const response = await api.get<Dataset>(
     `/datasets/${datasetId}`
   );
 
@@ -30,11 +38,10 @@ export async function getDataset(
 export async function createDataset(
   payload: {
     name: string;
-    version: string;
     language_coverage: string[];
   }
 ) {
-  const response = await api.post(
+  const response = await api.post<Dataset>(
     "/datasets",
     payload
   );

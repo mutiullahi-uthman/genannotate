@@ -42,11 +42,16 @@ export default function UsersPage() {
       render: (user) => (
         <select
           aria-label={`Role for ${user.full_name}`}
-          value={user.role}
+          value={user.role ?? ""}
           disabled={updateUser.isPending || user.id === profile?.id}
           onChange={(event) =>
             updateUser.mutate(
-              { userId: user.id, role: event.target.value as UserRole },
+              {
+                userId: user.id,
+                ...(event.target.value
+                  ? { role: event.target.value as UserRole }
+                  : { membership_active: false }),
+              },
               {
                 onSuccess: () => toast.success("User role updated."),
               },
@@ -54,11 +59,49 @@ export default function UsersPage() {
           }
           className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
         >
+          {!user.role && <option value="">Not a project member</option>}
           {roles.map((role) => (
             <option key={role} value={role}>
               {role.replaceAll("_", " ")}
             </option>
           ))}
+        </select>
+      ),
+    },
+    {
+      key: "project-access",
+      header: "Project access",
+      render: (user) => (
+        <select
+          aria-label={`Project access for ${user.full_name}`}
+          value={
+            user.membership_active === true
+              ? "active"
+              : user.membership_active === false
+                ? "inactive"
+                : "none"
+          }
+          disabled={
+            updateUser.isPending ||
+            user.id === profile?.id ||
+            !user.role
+          }
+          onChange={(event) =>
+            updateUser.mutate(
+              {
+                userId: user.id,
+                membership_active: event.target.value === "active",
+              },
+              {
+                onSuccess: () => toast.success("Project access updated."),
+              },
+            )
+          }
+          className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
+        >
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="none">Not a member</option>
         </select>
       ),
     },
@@ -96,7 +139,7 @@ export default function UsersPage() {
         <header>
           <h1 className="text-3xl font-bold">User management</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Manage access roles and account status for registered users.
+            Manage roles and project membership for registered users. Account status applies across projects.
           </p>
         </header>
         <DataTable

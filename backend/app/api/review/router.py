@@ -33,6 +33,7 @@ router = APIRouter(
 # GET /review/queue
 @router.get(
     "/queue",
+    dependencies=[Depends(require_permission(Permission.REVIEW_APPROVE))],
 )
 def get_review_queue(
     db: Session = Depends(get_db),

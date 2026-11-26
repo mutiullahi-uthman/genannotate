@@ -57,7 +57,13 @@ Run these commands from the repository root in PowerShell:
 
    `FIREBASE_PRIVATE_KEY` in `backend\.env` should use escaped `\n` sequences between key lines. Do not commit either `.env` file or put real credentials in the example files.
 
-   Keep the bucket private; the backend accesses objects through Google Cloud credentials. The upload API returns the object's canonical URL, which is not anonymously accessible unless you explicitly configure public access.
+   Keep the bucket private. The browser uploads dataset files directly to GCS using short-lived signed URLs; the API stores object keys only. Exports are also private and are downloaded through short-lived signed URLs.
+
+   Configure bucket CORS for the frontend origin before using browser uploads. Replace `https://app.example.org` in `backend/gcs-cors.json` with the deployed frontend origin, then run:
+
+   ```powershell
+   gcloud storage buckets update gs://YOUR_BUCKET --cors-file=backend/gcs-cors.json
+   ```
 
 4. Start the backend, database, migrations, Redis, and Celery worker:
 
@@ -142,14 +148,15 @@ The complete variable lists and placeholder values are in [`backend/.env.example
 | `/login` | Sign in |
 | `/dashboard` | Work overview and charts |
 | `/datasets` | Browse and manage datasets |
+| `/assignments` | Manually assign records or distribute them evenly |
 | `/queue` | Annotation queue |
 | `/review` | Review workflow |
 | `/reports` | Reports |
 | `/exports` | Export jobs and history |
 | `/codebooks` | Codebook management |
-| `/users` | User and role management |
+| `/users` | Project membership and role management |
 
-Some navigation items and operations are limited by the signed-in user's role. New Firebase users are provisioned as annotators by default; administrators manage user roles and status through the user-management workflow. Backend permission checks remain authoritative.
+Projects scope datasets, records, annotations, memberships, and exports. Select an active project in the sidebar; its ID is sent with API requests and the backend checks membership and role for every project-scoped operation. New Firebase users join the default project as annotators. An Admin can create projects and manage each project's memberships and roles from the sidebar and **Users** page. Backend permission checks remain authoritative.
 
 | Role | Main capabilities |
 | --- | --- |
@@ -158,11 +165,29 @@ Some navigation items and operations are limited by the signed-in user's role. N
 | Research lead | Manage codebooks, create datasets, and generate exports |
 | Annotator | Annotation workflow without management permissions |
 
+### Creating the first Admin
+
+There is no public endpoint or self-service flow for granting Admin access. First, sign in to GenAnnotate once with the account that should become the initial Admin. From the repository root, rebuild and start the backend API so its image includes the bootstrap command, then run it:
+
+```powershell
+docker compose -f backend\docker-compose.yml up --build -d api
+docker compose -f backend\docker-compose.yml exec api python -m app.bootstrap_admin --email you@example.com
+```
+
+From WSL or another Bash shell, use forward slashes in the Compose file path:
+
+```bash
+docker compose -f backend/docker-compose.yml up --build -d api
+docker compose -f backend/docker-compose.yml exec api python -m app.bootstrap_admin --email you@example.com
+```
+
+The command only promotes an existing active account and only when no Admin exists. It serializes concurrent attempts and refuses to run after an Admin has been created. Once promoted, sign out and back in, then use **Users** in the application to assign roles to other accounts. Keep access to this command limited to trusted operators.
+
 ## Imports and background jobs
 
-Dataset uploads accept CSV, XLSX, and JSON. Required fields, aliases, and validation rules are documented in [`backend/IMPORT_FORMAT.md`](backend/IMPORT_FORMAT.md). Import and export jobs run through Celery; keep the worker running for jobs to complete. Active job progress is refreshed by polling the API every two seconds.
+Dataset uploads accept CSV, XLSX, and JSON. Files are uploaded directly to private GCS with a short-lived signed PUT URL, then verified by the API before they can be imported. Every successful import creates an immutable dataset version. Required fields, aliases, and validation rules are documented in [`backend/IMPORT_FORMAT.md`](backend/IMPORT_FORMAT.md). Import and export jobs run through Celery; keep the worker running for jobs to complete. Completed exports are saved as private GCS objects and exposed through short-lived signed download links. Active job progress is refreshed by polling the API every two seconds.
 
-The import workflow uses a `QUEUED` job state. Apply the Alembic migrations before using this workflow; the Docker Compose startup does this automatically.
+All application endpoints are mounted under `/api/v1`. The frontend appends this prefix to `NEXT_PUBLIC_API_URL`, which should contain the API origin (for example `http://localhost:8001`). The import workflow uses a `QUEUED` job state. Apply the Alembic migrations before using this workflow; the Docker Compose startup does this automatically.
 
 ## Checks and tests
 

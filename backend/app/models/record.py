@@ -4,14 +4,19 @@ from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import RecordState
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Record(BaseModel):
+class Record(ProjectScopedMixin, BaseModel):
     __tablename__ = "records"
 
     dataset_id = mapped_column(
         ForeignKey("datasets.id"),
+        nullable=False,
+        index=True,
+    )
+    dataset_version_id = mapped_column(
+        ForeignKey("dataset_versions.id"),
         nullable=False,
         index=True,
     )

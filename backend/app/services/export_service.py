@@ -98,16 +98,6 @@ class ExportService:
             annotations
         )
 
-        export_record.status = (
-            ExportStatus.COMPLETED
-        )
-
-        export_record.exported_at = (
-            datetime.utcnow()
-        )
-
-        self.db.commit()
-
         return output.getvalue()
 
     def export_json(
@@ -156,16 +146,6 @@ class ExportService:
         export_record.record_count = len(
             annotations
         )
-
-        export_record.status = (
-            ExportStatus.COMPLETED
-        )
-
-        export_record.exported_at = (
-            datetime.utcnow()
-        )
-
-        self.db.commit()
 
         return json.dumps(
             results,

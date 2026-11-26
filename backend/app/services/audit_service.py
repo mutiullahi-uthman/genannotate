@@ -23,6 +23,7 @@ class AuditService:
         reason=None,
         ip_address=None,
         user_agent=None,
+        commit=True,
     ):
         audit = AuditEvent(
             actor_id=actor_id,
@@ -37,7 +38,8 @@ class AuditService:
         )
 
         return self.repository.create(
-            audit
+            audit,
+            commit=commit,
         )
 
     def list_events(

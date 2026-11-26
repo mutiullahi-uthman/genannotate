@@ -1,10 +1,10 @@
-from sqlalchemy import BigInteger, ForeignKey, String
+from sqlalchemy import BigInteger, Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class DatasetFile(BaseModel):
+class DatasetFile(ProjectScopedMixin, BaseModel):
     __tablename__ = "dataset_files"
 
     dataset_id = mapped_column(
@@ -27,19 +27,26 @@ class DatasetFile(BaseModel):
         nullable=False,
     )
 
-    blob_path: Mapped[str] = mapped_column(
-        String(1000),
-        nullable=False,
-    )
-
-    cdn_url: Mapped[str] = mapped_column(
+    object_key: Mapped[str] = mapped_column(
         String(1000),
         nullable=False,
     )
 
     checksum: Mapped[str] = mapped_column(
         String(255),
+        nullable=True,
+    )
+
+    upload_complete: Mapped[bool] = mapped_column(
+        Boolean,
         nullable=False,
+        default=False,
+    )
+
+    dataset_version_id = mapped_column(
+        ForeignKey("dataset_versions.id"),
+        nullable=True,
+        index=True,
     )
 
     uploaded_by_id = mapped_column(

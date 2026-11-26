@@ -18,9 +18,6 @@ class AssignmentRepository:
         assignment: Assignment,
     ):
         self.db.add(assignment)
-        self.db.commit()
-        self.db.refresh(assignment)
-
         return assignment
 
     def get_record(
@@ -38,14 +35,17 @@ class AssignmentRepository:
     def get_unassigned_records(
         self,
         dataset_id: UUID,
+        dataset_version_id: UUID,
         limit: int,
     ):
         return (
             self.db.query(Record)
             .filter(
                 Record.dataset_id == dataset_id,
+                Record.dataset_version_id == dataset_version_id,
                 Record.assignee_id.is_(None),
             )
+            .order_by(Record.created_at.asc())
             .limit(limit)
             .all()
         )
@@ -54,7 +54,4 @@ class AssignmentRepository:
         self,
         record: Record,
     ):
-        self.db.commit()
-        self.db.refresh(record)
-
         return record

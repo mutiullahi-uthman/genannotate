@@ -20,7 +20,9 @@ export default function DatasetCard({
           </h3>
 
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            Version {dataset.version}
+            {dataset.latest_version
+              ? `Latest: ${dataset.latest_version.label}`
+              : "No imported versions"}
           </p>
         </div>
 

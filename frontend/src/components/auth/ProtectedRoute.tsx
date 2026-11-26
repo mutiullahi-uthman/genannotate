@@ -32,7 +32,8 @@ export default function ProtectedRoute({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
         <p role="alert" className="text-red-700 dark:text-red-300">
-          {error}
+          {error ??
+            "Your account is not currently a member of an active project. Contact a project administrator for access."}
         </p>
         <button
           type="button"

@@ -20,20 +20,45 @@ export default function UploadDatasetFile({
   async function upload() {
     if (!file || uploading) return;
 
-    const formData =
-      new FormData();
-
-    formData.append(
-      "file",
-      file
-    );
-
     setUploading(true);
     setErrorMessage(null);
     try {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      const contentType =
+        file.type ||
+        (extension === "csv"
+          ? "text/csv"
+          : extension === "xlsx"
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/json");
+      const uploadIntent = await api.post<{
+        dataset_file_id: string;
+        upload_url: string;
+        content_type: string;
+      }>(
+        `/uploads/datasets/${datasetId}/signed-url`,
+        {
+          file_name: file.name,
+          content_type: contentType,
+          file_size: file.size,
+        },
+      );
+      const storageResponse = await fetch(
+        uploadIntent.data.upload_url,
+        {
+          method: "PUT",
+          headers: { "Content-Type": uploadIntent.data.content_type },
+          body: file,
+        },
+      );
+      if (!storageResponse.ok) {
+        throw new Error(
+          `Cloud storage rejected the upload (${storageResponse.status}).`,
+        );
+      }
       const uploadResponse = await api.post<{ id: string }>(
-        `/uploads/datasets/${datasetId}`,
-        formData,
+        "/uploads/complete",
+        { dataset_file_id: uploadIntent.data.dataset_file_id },
       );
       const jobResponse = await api.post<{ job_id: string }>(
         `/imports/datasets/${datasetId}/files/${uploadResponse.data.id}`,
@@ -68,9 +93,10 @@ export default function UploadDatasetFile({
       const detail = axios.isAxiosError(error)
         ? error.response?.data?.detail
         : null;
-      const message =
-        typeof detail === "string"
-          ? detail
+      const message = typeof detail === "string"
+        ? detail
+        : error instanceof Error
+          ? error.message
           : "Upload or import failed. Please try again.";
       setErrorMessage(message);
     } finally {

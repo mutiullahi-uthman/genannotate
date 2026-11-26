@@ -2,10 +2,10 @@ from sqlalchemy import Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import CodebookStatus
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Codebook(BaseModel):
+class Codebook(ProjectScopedMixin, BaseModel):
     __tablename__ = "codebooks"
 
     name: Mapped[str] = mapped_column(

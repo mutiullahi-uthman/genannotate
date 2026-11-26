@@ -7,10 +7,10 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
 from app.core.enums import ImportJobStatus
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class ImportJob(BaseModel):
+class ImportJob(ProjectScopedMixin, BaseModel):
     __tablename__ = "import_jobs"
 
     dataset_id = mapped_column(
@@ -21,6 +21,11 @@ class ImportJob(BaseModel):
     dataset_file_id = mapped_column(
         ForeignKey("dataset_files.id"),
         nullable=False,
+    )
+    dataset_version_id = mapped_column(
+        ForeignKey("dataset_versions.id"),
+        nullable=True,
+        index=True,
     )
 
     status: Mapped[ImportJobStatus] = mapped_column(

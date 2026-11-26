@@ -6,10 +6,10 @@ from app.core.enums import (
     AuditAction,
     AuditEntity,
 )
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class AuditEvent(BaseModel):
+class AuditEvent(ProjectScopedMixin, BaseModel):
     __tablename__ = "audit_events"
 
     actor_id = mapped_column(

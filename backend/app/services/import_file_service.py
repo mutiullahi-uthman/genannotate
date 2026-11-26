@@ -55,6 +55,10 @@ class ImportFileService:
             raise ImportFileError(
                 "The uploaded source file does not belong to this dataset."
             )
+        if not dataset_file.upload_complete:
+            raise ImportFileError(
+                "The uploaded source file has not been completed."
+            )
 
         if self.blob_storage is None:
             from app.services.blob_storage_service import BlobStorageService
@@ -62,7 +66,7 @@ class ImportFileService:
             self.blob_storage = BlobStorageService()
 
         contents = self.blob_storage.download_file(
-            dataset_file.blob_path
+            dataset_file.object_key
         )
         return parse_import_file(
             dataset_file.file_name,

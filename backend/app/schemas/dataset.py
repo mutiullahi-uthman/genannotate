@@ -13,11 +13,6 @@ class DatasetCreate(BaseModel):
         max_length=255,
     )
 
-    version: str = Field(
-        min_length=1,
-        max_length=100,
-    )
-
     language_coverage: list[str]
 
 
@@ -32,21 +27,24 @@ class DatasetUpdate(BaseModel):
     language_coverage: list[str] | None = None
 
 
+class DatasetVersionResponse(BaseModel):
+    id: UUID
+    version_number: int
+    label: str
+    imported_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class DatasetResponse(BaseModel):
     id: UUID
-
     name: str
-    version: str
-
     status: DatasetStatus
-
     language_coverage: list[str]
-
     created_by_id: UUID
-
     created_at: datetime
     updated_at: datetime
+    latest_version: DatasetVersionResponse | None
+    versions: list[DatasetVersionResponse]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}

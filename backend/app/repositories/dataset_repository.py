@@ -34,16 +34,14 @@ class DatasetRepository:
             .first()
         )
 
-    def get_by_name_and_version(
+    def get_by_name(
         self,
         name: str,
-        version: str,
     ) -> Dataset | None:
         return (
             self.db.query(Dataset)
             .filter(
                 Dataset.name == name,
-                Dataset.version == version,
             )
             .first()
         )

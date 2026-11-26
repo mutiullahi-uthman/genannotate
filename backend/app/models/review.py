@@ -5,10 +5,10 @@ from app.core.enums import (
     ReviewDecision,
     ReviewStatus,
 )
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Review(BaseModel):
+class Review(ProjectScopedMixin, BaseModel):
     __tablename__ = "reviews"
 
     record_id = mapped_column(

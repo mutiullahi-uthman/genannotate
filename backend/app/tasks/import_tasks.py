@@ -1,9 +1,14 @@
+from sqlalchemy import func
+
 from app.core.logging import logger
 from app.tasks.celery_app import celery_app
 
 from app.database.session import SessionLocal
 
 from app.models.import_job import ImportJob
+from app.models.dataset import Dataset
+from app.models.dataset_file import DatasetFile
+from app.models.dataset_version import DatasetVersion
 
 from app.core.enums import ImportJobStatus
 
@@ -43,6 +48,7 @@ def process_import_job(
                 extra={"import_job_id": import_job_id},
             )
             return
+        db.info["project_id"] = job.project_id
 
         claimed = (
             db.query(ImportJob)
@@ -86,6 +92,9 @@ def process_import_job(
             job=job,
             db=db,
         )
+        job.total_rows = validation.total_rows
+        job.valid_rows = validation.valid_rows
+        job.invalid_rows = validation.invalid_rows
 
         if validation.errors:
             job.status = (
@@ -114,10 +123,44 @@ def process_import_job(
             ImportService()
         )
 
+        dataset = (
+            db.query(Dataset)
+            .filter(Dataset.id == job.dataset_id)
+            .with_for_update()
+            .first()
+        )
+        dataset_file = (
+            db.query(DatasetFile)
+            .filter(DatasetFile.id == job.dataset_file_id)
+            .first()
+        )
+        if dataset is None or dataset_file is None:
+            raise RuntimeError(
+                "Import dataset or uploaded file could not be found."
+            )
+
+        latest_version = (
+            db.query(func.max(DatasetVersion.version_number))
+            .filter(DatasetVersion.dataset_id == job.dataset_id)
+            .scalar()
+        )
+        version_number = (latest_version or 0) + 1
+        dataset_version = DatasetVersion(
+            dataset_id=job.dataset_id,
+            version_number=version_number,
+            label=f"v{version_number}",
+            imported_by_id=dataset_file.uploaded_by_id,
+        )
+        db.add(dataset_version)
+        db.flush()
+        job.dataset_version_id = dataset_version.id
+        dataset_file.dataset_version_id = dataset_version.id
+
         imported_count = (
             import_service.import_dataset(
                 import_job=job,
                 db=db,
+                dataset_version_id=dataset_version.id,
                 parsed_file=validation.parsed_file,
             )
         )

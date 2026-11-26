@@ -54,7 +54,6 @@ def create_dataset(
 
     return service.create_dataset(
         name=payload.name,
-        version=payload.version,
         language_coverage=payload.language_coverage,
         created_by_id=current_user.id,
     )
@@ -96,6 +95,7 @@ def get_dataset(
 @router.patch(
     "/{dataset_id}",
     response_model=DatasetResponse,
+    dependencies=[Depends(require_permission(Permission.DATASET_CREATE))],
 )
 def update_dataset(
     dataset_id: UUID,

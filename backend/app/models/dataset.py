@@ -3,19 +3,14 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import DatasetStatus
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Dataset(BaseModel):
+class Dataset(ProjectScopedMixin, BaseModel):
     __tablename__ = "datasets"
 
     name: Mapped[str] = mapped_column(
         String(255),
-        nullable=False,
-    )
-
-    version: Mapped[str] = mapped_column(
-        String(100),
         nullable=False,
     )
 
@@ -46,3 +41,13 @@ class Dataset(BaseModel):
         back_populates="dataset",
         cascade="all, delete-orphan",
     )
+    versions = relationship(
+        "DatasetVersion",
+        back_populates="dataset",
+        cascade="all, delete-orphan",
+        order_by="DatasetVersion.version_number",
+    )
+
+    @property
+    def latest_version(self):
+        return self.versions[-1] if self.versions else None

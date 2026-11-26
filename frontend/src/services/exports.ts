@@ -15,3 +15,11 @@ export async function getExportHistory() {
 
   return response.data;
 }
+
+export async function getExportDownloadUrl(exportId: string) {
+  const response = await api.get<{
+    download_url: string;
+    expires_in_seconds: number;
+  }>(`/exports/${exportId}/download`);
+  return response.data;
+}

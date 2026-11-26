@@ -4,10 +4,11 @@ import {
   getExportHistory,
 } from "@/services/exports";
 
-export function useExports() {
+export function useExports(enabled = true) {
   return useQuery({
     queryKey: ["exports"],
     queryFn: getExportHistory,
+    enabled,
     refetchInterval: (query) =>
       query.state.data?.some(
         (item) =>

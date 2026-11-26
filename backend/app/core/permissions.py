@@ -2,9 +2,9 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
 
-from app.core.auth import get_current_user
+from app.core.project_context import get_active_project_membership
 from app.core.enums import Permission, UserRole
-from app.models.user import User
+from app.models.project import ProjectMembership
 
 
 ROLE_PERMISSIONS = {
@@ -26,28 +26,36 @@ ROLE_PERMISSIONS = {
 
 
 def require_permission(*permissions: Permission):
-    def checker(user: User = Depends(get_current_user)) -> User:
-        allowed = ROLE_PERMISSIONS.get(user.role, set())
+    def checker(
+        membership: ProjectMembership = Depends(
+            get_active_project_membership
+        ),
+    ) -> ProjectMembership:
+        allowed = ROLE_PERMISSIONS.get(membership.role, set())
         if not allowed.intersection(permissions):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",
             )
 
-        return user
+        return membership
 
     return checker
 
 
 def require_role(*roles):
-    def checker(user: User = Depends(get_current_user)) -> User:
-        if user.role not in roles:
+    def checker(
+        membership: ProjectMembership = Depends(
+            get_active_project_membership
+        ),
+    ) -> ProjectMembership:
+        if membership.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",
             )
 
-        return user
+        return membership
 
     return checker
 

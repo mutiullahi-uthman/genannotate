@@ -8,12 +8,11 @@ export type UserRole =
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
 
-export type UserProfile = {
+export type AccountProfile = {
   id: string;
   firebase_uid: string;
   email: string;
   full_name: string;
-  role: UserRole;
   status: UserStatus;
 };
 
@@ -22,6 +21,6 @@ export async function syncCurrentUser() {
 }
 
 export async function getCurrentUser() {
-  const response = await api.get<UserProfile>("/auth/me");
+  const response = await api.get<AccountProfile>("/auth/me");
   return response.data;
 }

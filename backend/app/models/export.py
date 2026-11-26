@@ -3,10 +3,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.enums import ExportFormat, ExportStatus
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class Export(BaseModel):
+class Export(ProjectScopedMixin, BaseModel):
     __tablename__ = "exports"
 
     dataset_id: Mapped[str] = mapped_column(
@@ -45,12 +45,7 @@ class Export(BaseModel):
         default=ExportStatus.PENDING,
     )
 
-    file_path: Mapped[str | None] = mapped_column(
-        String(1000),
-        nullable=True,
-    )
-
-    cdn_url: Mapped[str | None] = mapped_column(
+    object_key: Mapped[str | None] = mapped_column(
         String(1000),
         nullable=True,
     )

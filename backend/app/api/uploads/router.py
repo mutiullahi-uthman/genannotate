@@ -1,136 +1,155 @@
-import hashlib
-from pathlib import Path
-from uuid import UUID
-from uuid import uuid4
+from pathlib import PurePosixPath
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter
-from fastapi import Request
-from fastapi import Depends
-from fastapi import File
-from fastapi import HTTPException
-from fastapi import UploadFile
-from fastapi import status
-
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
+from app.core.enums import Permission
+from app.core.permissions import require_permission
 from app.core.rate_limit import limiter
 from app.database.session import get_db
-
 from app.models.dataset import Dataset
 from app.models.dataset_file import DatasetFile
 from app.models.user import User
-
-from app.services.blob_storage_service import (
-    BlobStorageService,
+from app.schemas.upload import (
+    SignedUploadRequest,
+    SignedUploadResponse,
+    UploadCompleteRequest,
 )
+from app.services.blob_storage_service import BlobStorageService
 
 router = APIRouter(
     prefix="/uploads",
     tags=["Uploads"],
+    dependencies=[Depends(require_permission(Permission.DATASET_CREATE))],
 )
 
-ALLOWED_CONTENT_TYPES = {
-    "text/csv",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/json",
+MAX_FILE_SIZE = 50 * 1024 * 1024
+ALLOWED_FILE_TYPES = {
+    ".csv": {"text/csv", "application/vnd.ms-excel"},
+    ".xlsx": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
+    ".json": {"application/json"},
 }
-ALLOWED_EXTENSIONS = {
-    ".csv",
-    ".xlsx",
-    ".json",
-}
-
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
 @router.post(
-    "/datasets/{dataset_id}",
+    "/datasets/{dataset_id}/signed-url",
+    response_model=SignedUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
 @limiter.limit("20/minute")
-async def upload_dataset_file(
+def create_upload_url(
     request: Request,
     dataset_id: UUID,
-    file: UploadFile = File(...),
+    payload: SignedUploadRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     dataset = (
         db.query(Dataset)
         .filter(Dataset.id == dataset_id)
         .first()
     )
-
-    if not dataset:
+    if dataset is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Dataset not found",
         )
 
-    file_name = (
-        (file.filename or "")
-        .replace("\\", "/")
-        .rsplit("/", 1)[-1]
-    )
-    content_type = (
-        (file.content_type or "")
-        .split(";", 1)[0]
-        .strip()
-        .lower()
-    )
-    extension = Path(file_name).suffix.lower()
+    file_name = payload.file_name.replace("\\", "/").rsplit("/", 1)[-1].strip()
+    extension = PurePosixPath(file_name).suffix.lower()
+    content_type = payload.content_type.split(";", 1)[0].strip().lower()
     if (
-        content_type not in ALLOWED_CONTENT_TYPES
-        or extension not in ALLOWED_EXTENSIONS
+        not file_name
+        or extension not in ALLOWED_FILE_TYPES
+        or content_type not in ALLOWED_FILE_TYPES[extension]
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Only CSV, XLSX, and JSON files are supported"
-            ),
+            detail="Only CSV, XLSX, and JSON files with matching content types are supported.",
         )
-
-    contents = await file.read()
-
-    if len(contents) > MAX_FILE_SIZE:
+    if payload.file_size > MAX_FILE_SIZE:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File exceeds 50MB limit",
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File exceeds the 50MB limit.",
         )
 
-    storage = BlobStorageService()
-
-    blob_path = (
-        f"datasets/{dataset_id}/{uuid4().hex}/{file_name}"
+    project_id = db.info["project_id"]
+    object_key = (
+        f"projects/{project_id}/datasets/{dataset_id}/"
+        f"{uuid4().hex}/{file_name}"
     )
-
-    blob_url = storage.upload_file(
-        file_name=blob_path,
-        file_bytes=contents,
+    storage = BlobStorageService()
+    upload_url = storage.create_signed_upload_url(
+        object_key,
+        content_type,
     )
 
     dataset_file = DatasetFile(
         dataset_id=dataset_id,
         file_name=file_name,
         mime_type=content_type,
-        file_size=len(contents),
-        blob_path=blob_path,
-        cdn_url=blob_url,
-        checksum=hashlib.sha256(contents).hexdigest(),
+        file_size=payload.file_size,
+        object_key=object_key,
+        upload_complete=False,
         uploaded_by_id=current_user.id,
     )
-
     db.add(dataset_file)
     db.commit()
     db.refresh(dataset_file)
 
+    return SignedUploadResponse(
+        dataset_file_id=dataset_file.id,
+        content_type=content_type,
+        upload_url=upload_url,
+    )
+
+
+@router.post("/complete")
+@limiter.limit("60/minute")
+def complete_upload(
+    request: Request,
+    payload: UploadCompleteRequest,
+    db: Session = Depends(get_db),
+):
+    dataset_file = (
+        db.query(DatasetFile)
+        .filter(DatasetFile.id == payload.dataset_file_id)
+        .first()
+    )
+    if dataset_file is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Uploaded file not found",
+        )
+    if dataset_file.upload_complete:
+        return {
+            "id": str(dataset_file.id),
+            "dataset_id": str(dataset_file.dataset_id),
+            "file_name": dataset_file.file_name,
+        }
+
+    try:
+        checksum = BlobStorageService().verify_uploaded_file(
+            object_key=dataset_file.object_key,
+            expected_size=dataset_file.file_size,
+            expected_content_type=dataset_file.mime_type,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    dataset_file.checksum = checksum
+    dataset_file.upload_complete = True
+    db.commit()
+
     return {
         "id": str(dataset_file.id),
-        "dataset_id": str(dataset_id),
+        "dataset_id": str(dataset_file.dataset_id),
         "file_name": dataset_file.file_name,
-        "blob_url": blob_url,
     }

@@ -11,8 +11,12 @@ from app.core.rate_limit import limiter
 
 from app.database.session import get_db
 
-from app.core.enums import ExportFormat, Permission, UserRole
+from app.core.enums import ExportFormat, ExportStatus, Permission, UserRole
 from app.core.permissions import require_permission
+from app.core.project_context import get_active_project_membership
+from app.models.project import ProjectMembership
+from app.services.blob_storage_service import BlobStorageService
+from app.schemas.export import ExportResponse
 
 from app.services.export_service import (
     ExportService,
@@ -95,11 +99,15 @@ def export_json(
 # Export History
 @router.get(
     "/history",
-    dependencies=[Depends(get_current_user)],
+    response_model=list[ExportResponse],
+    dependencies=[Depends(require_permission(Permission.EXPORT_GENERATE))],
 )
 def export_history(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
+    current_membership: ProjectMembership = Depends(
+        get_active_project_membership
+    ),
 ):
     service = ExportService(db)
     all_exports_roles = {
@@ -111,20 +119,65 @@ def export_history(
     return service.get_export_history(
         requested_by_id=(
             None
-            if current_user.role in all_exports_roles
+            if current_membership.role in all_exports_roles
             else current_user.id
         )
     )
 
 # Export Details
 @router.get(
+    "/{export_id}/download",
+    dependencies=[Depends(require_permission(Permission.EXPORT_GENERATE))],
+)
+def get_export_download_url(
+    export_id: UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    current_membership: ProjectMembership = Depends(
+        get_active_project_membership
+    ),
+):
+    export = ExportService(db).get_export(export_id)
+    if export is None or (
+        export.requested_by_id != current_user.id
+        and current_membership.role
+        not in {
+            UserRole.ADMIN,
+            UserRole.SUPERVISOR,
+            UserRole.RESEARCH_LEAD,
+        }
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Export not found",
+        )
+    if export.status != ExportStatus.COMPLETED or not export.object_key:
+        raise HTTPException(
+            status_code=409,
+            detail="Export artifact is not ready for download.",
+        )
+
+    return {
+        "download_url": BlobStorageService().create_signed_download_url(
+            export.object_key,
+            f"{export.export_identifier}.{str(export.export_format).lower()}",
+        ),
+        "expires_in_seconds": 300,
+    }
+
+
+@router.get(
     "/{export_id}",
-    dependencies=[Depends(get_current_user)],
+    response_model=ExportResponse,
+    dependencies=[Depends(require_permission(Permission.EXPORT_GENERATE))],
 )
 def get_export(
     export_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
+    current_membership: ProjectMembership = Depends(
+        get_active_project_membership
+    ),
 ):
     service = ExportService(db)
 
@@ -140,7 +193,7 @@ def get_export(
 
     if (
         export.requested_by_id != current_user.id
-        and current_user.role
+        and current_membership.role
         not in {
             UserRole.ADMIN,
             UserRole.SUPERVISOR,

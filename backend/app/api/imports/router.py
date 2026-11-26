@@ -8,6 +8,8 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
+from app.core.enums import Permission
+from app.core.permissions import require_permission
 from app.database.session import get_db
 
 from app.models.dataset import Dataset
@@ -26,6 +28,7 @@ from app.tasks.import_tasks import (
 router = APIRouter(
     prefix="/imports",
     tags=["Imports"],
+    dependencies=[Depends(require_permission(Permission.DATASET_CREATE))],
 )
 
 # Create a new import job for a dataset
@@ -70,6 +73,11 @@ def create_import_job(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found",
+        )
+    if not dataset_file.upload_complete:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="File upload has not been completed.",
         )
 
     import_job = ImportJob(
@@ -131,6 +139,9 @@ def validate_import(
     )
 
     if validation.errors:
+        job.total_rows = validation.total_rows
+        job.valid_rows = validation.valid_rows
+        job.invalid_rows = validation.invalid_rows
         job.status = (
             ImportJobStatus.VALIDATION_FAILED
         )
@@ -149,6 +160,9 @@ def validate_import(
             "invalid_rows": validation.invalid_rows,
         }
 
+    job.total_rows = validation.total_rows
+    job.valid_rows = validation.valid_rows
+    job.invalid_rows = validation.invalid_rows
     job.status = ImportJobStatus.VALIDATED
     job.error_message = None
 

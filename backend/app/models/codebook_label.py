@@ -1,10 +1,10 @@
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.base import BaseModel
+from app.database.base import BaseModel, ProjectScopedMixin
 
 
-class CodebookLabel(BaseModel):
+class CodebookLabel(ProjectScopedMixin, BaseModel):
     __tablename__ = "codebook_labels"
 
     codebook_id = mapped_column(

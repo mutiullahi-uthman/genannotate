@@ -16,6 +16,7 @@ class ImportService:
         self,
         import_job,
         db,
+        dataset_version_id,
         parsed_file: ParsedImportFile | None = None,
     ):
         if parsed_file is None:
@@ -41,6 +42,7 @@ class ImportService:
         for row in parsed_file.rows:
             record = Record(
                 dataset_id=import_job.dataset_id,
+                dataset_version_id=dataset_version_id,
                 record_id=row["record_id"],
                 language=row["language"],
                 instrument=row["instrument"],

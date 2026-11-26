@@ -16,6 +16,7 @@ class ImportServiceTests(unittest.TestCase):
 
         self.service = ImportService()
         self.job = SimpleNamespace(dataset_id=uuid4())
+        self.dataset_version_id = uuid4()
 
         class DatabaseStub:
             def __init__(self):
@@ -58,6 +59,7 @@ class ImportServiceTests(unittest.TestCase):
         count = self.service.import_dataset(
             import_job=self.job,
             db=self.db,
+            dataset_version_id=self.dataset_version_id,
             parsed_file=parsed_file,
         )
 
@@ -67,6 +69,10 @@ class ImportServiceTests(unittest.TestCase):
         self.assertEqual(
             self.db.records[0].dataset_id,
             self.job.dataset_id,
+        )
+        self.assertEqual(
+            self.db.records[0].dataset_version_id,
+            self.dataset_version_id,
         )
         self.assertEqual(
             self.db.records[0].record_id,
@@ -95,6 +101,7 @@ class ImportServiceTests(unittest.TestCase):
             self.service.import_dataset(
                 import_job=self.job,
                 db=self.db,
+                dataset_version_id=self.dataset_version_id,
                 parsed_file=parsed_file,
             )
 

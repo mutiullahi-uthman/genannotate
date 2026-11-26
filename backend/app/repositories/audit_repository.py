@@ -13,10 +13,12 @@ class AuditRepository:
     def create(
         self,
         audit: AuditEvent,
+        commit: bool = True,
     ):
         self.db.add(audit)
-        self.db.commit()
-        self.db.refresh(audit)
+        if commit:
+            self.db.commit()
+            self.db.refresh(audit)
 
         return audit
 
